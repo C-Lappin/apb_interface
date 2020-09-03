@@ -1,0 +1,13 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+
+read -formal apb_if.v
+prep -top apb_s_if
+
+[files]
+apb_if.v
