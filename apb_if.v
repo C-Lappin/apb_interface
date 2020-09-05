@@ -5,6 +5,8 @@
 module apb_s_if(pclk, presetn, paddr, pwdata, prdata, penable, psel, pwrite, pready);
 parameter ADDR_WIDTH = 32;
 parameter DATA_WIDTH = 32;
+parameter RAM_WIDTH  = 32;
+parameter n = 8;
    // inputs 
    input pclk;
    input presetn;
@@ -19,6 +21,7 @@ parameter DATA_WIDTH = 32;
    output [DATA_WIDTH -1 :0] prdata;
    output pready;
    
+   logic reg [RAM_WIDTH -1:0] ram [2**n-1:0];
    logic wire wr_enable;
    logic wire rd_enable;
    
@@ -77,34 +80,68 @@ parameter DATA_WIDTH = 32;
             
             
         end   
+
+    always@(*)
+        begin
+            if (psel == 1'b1 && apb_state == 2'b00 && pwrite == 1'b1)
+                begin
+                    pready <= 1'b1;
+                end
+            else if (apb_state == 2'b01 && pwrite == 1'b1)
+                begin
+                    pready <= 1'b1;
+                end
+            else if (apb_state == 2'b10)
+                begin
+                    pready <= 1'b1;
+                end
+            else
+                begin
+                    pready <= 1'b0;
+                end
+        end
+     
+    always@(*)
+        begin
+            if (psel == 1'b1 && apb_state == 2'b00 && pwrite == 1'b1)
+                begin
+                    wr_enable <= 1'b1;
+                end
+            else
+                begin
+                    wr_enable <= 1'b0;
+                end
+        end
         
-   assign wr_enable = (penable && pwrite && psel);
-   assign rd_enable = (!pwrite && psel);
-   
-   
-   
+    always@(*)
+        begin
+            if (psel == 1'b1 && apb_state == 2'b00 && pwrite == 1'b0)
+                begin
+                    rd_enable <= 1'b1;
+                end
+            else
+                begin
+                    rd_enable <= 1'b0;
+                end
+        end
+    
    `ifdef	FORMAL
    
             // apb state cannot be 2'b11
             always @(*)
                 assert(apb_state <= 2'b11);
-    
-            // if psel is not set then a write cannot happen 
-            /*always@(*)
-                begin
-                    if (!psel)                   
-                end*/
-            // if wr_enable is asserted then rd_enable cannot be asserted
+                
+            // wr_enable can only be asserted when  in apb_state IDLE, pwrite and psel asserted.
             always@(*)
                 begin
-                    if(penable && pwrite && psel)
+                    if(apb_state == 2'b00 && pwrite && psel)
                         assert(wr_enable);
                 end
             
-            // if rd_enable is asserted then wr_enable cannot be asserted
+            // rd_enable can only be asserted when pwrite is not assert, apb_state is IDLE and psel is asserted.
             always@(*)
                 begin
-                    if(!pwrite && psel)
+                    if(apb_state == 2'b00 && !pwrite && psel)
                         assert(rd_enable);
                 end
    
