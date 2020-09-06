@@ -21,6 +21,6 @@ Basic commands to run the testbench using iverilog.
 iverilog -o dut0.vvp apb_if.v apb_if_tb.v
 vvp dut0.vvp
 
-#Using GTKWave
+# Using GTKWave
 Basic command to open the VCD created by iverilog.
 gtkwave example.vcd
