@@ -22,7 +22,7 @@ parameter n = 8;
    output reg pready;
    
    reg [RAM_WIDTH -1:0] ram [3:0];
-   parameter MEM_INIT_FILE = "init.mem";
+   parameter MEM_INIT_FILE = "./simulation/init.mem";
 
     initial begin
         if (MEM_INIT_FILE != "") begin

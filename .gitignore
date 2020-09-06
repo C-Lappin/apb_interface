@@ -2,3 +2,5 @@ apb_if/
 formal/
 hdl/
 simulation/
+*.vvp
+*.vcd
