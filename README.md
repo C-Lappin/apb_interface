@@ -23,4 +23,5 @@ Basic commands to run the testbench using iverilog.
 
 # Using GTKWave
 Basic command to open the VCD created by iverilog.
+
     $ gtkwave example.vcd
