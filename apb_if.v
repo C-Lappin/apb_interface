@@ -18,19 +18,27 @@ parameter n = 8;
    
    
    // outputs
-   output [DATA_WIDTH -1 :0] prdata;
-   output pready;
+   output reg [DATA_WIDTH -1 :0] prdata;
+   output reg pready;
    
-   logic reg [RAM_WIDTH -1:0] ram [2**n-1:0];
-   logic wire wr_enable;
-   logic wire rd_enable;
+   reg [RAM_WIDTH -1:0] ram [3:0];
+   parameter MEM_INIT_FILE = "init.mem";
+
+    initial begin
+        if (MEM_INIT_FILE != "") begin
+            $readmemh(MEM_INIT_FILE, ram);
+        end 
+    end
+    
+   reg wr_enable;
+   reg rd_enable;
    
    // apb_state 
    // 00 IDLE
    // 01 SETUP
    // 10 ACCESS
    // 11 NOT_USED
-   logic reg [1:0] apb_state;
+   reg [1:0] apb_state;
    initial apb_state = 0;
    
     always@(posedge pclk or negedge presetn)
@@ -76,9 +84,7 @@ parameter n = 8;
                                 apb_state <= 2'b00;
                             end
                     endcase
-                end
-            
-            
+                end    
         end   
 
     always@(*)
@@ -124,6 +130,26 @@ parameter n = 8;
                     rd_enable <= 1'b0;
                 end
         end
+        
+    // APB Slave memory for testing
+    always@(posedge pclk)
+        begin
+            if (wr_enable)
+                begin
+                    ram[paddr] <= pwdata;
+                end    
+        end
+        
+    always@(posedge pclk)
+        begin
+            //if (rd_enable)
+                begin
+                    prdata <= ram[paddr];
+                end  
+            
+        end
+        
+    
     
    `ifdef	FORMAL
    
@@ -143,6 +169,16 @@ parameter n = 8;
                 begin
                     if(apb_state == 2'b00 && !pwrite && psel)
                         assert(rd_enable);
+                end
+                
+            always@(*)
+                begin
+                    if (psel == 1'b1 && apb_state == 2'b00 && pwrite == 1'b1)
+                        assert(pready);
+                    else if (apb_state == 2'b01 && pwrite == 1'b1)
+                        assert(pready);
+                    else if (apb_state == 2'b10)
+                        assert(pready);                        
                 end
    
    `endif
